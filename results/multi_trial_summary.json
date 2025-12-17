@@ -1,0 +1,62 @@
+{
+  "config": {
+    "n_train": 200,
+    "n_test": 50,
+    "pca_dims": 40,
+    "trials": 5
+  },
+  "results": [
+    {
+      "trial": 1,
+      "baseline_acc": 0.86,
+      "claude_acc": 0.8,
+      "improvement": -6.9767441860465045,
+      "function": "[np.clip(np.pi*(0.6*x[i%len(x)] + 0.3*x[(i+3)%len(x)] + 0.1*x[(i+7)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+      "explanation": "This encoding uses a weighted combination of the current feature, the feature 3 indices later, and the feature 7 indices later. The weights are chosen to sum to around 1 and provide a diverse set of angles across the 10 qubits."
+    },
+    {
+      "trial": 2,
+      "baseline_acc": 0.76,
+      "claude_acc": 0.8,
+      "improvement": 5.263157894736847,
+      "function": "[np.clip(np.pi*(0.6*x[i%len(x)] + 0.3*x[(i+5)%len(x)] + 0.1*x[(i+10)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+      "explanation": "This function mixes multiple PCA components with different weights to capture more diversity in the angle encodings. The weights are chosen such that the sum of their absolute values is less than or equal to 1, as per the linear template rules."
+    },
+    {
+      "trial": 3,
+      "baseline_acc": 0.78,
+      "claude_acc": 0.68,
+      "improvement": -12.820512820512816,
+      "function": "[np.clip(np.pi*(0.5*x[i%len(x)] + 0.3*x[(i+3)%len(x)] + 0.2*x[(i+7)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+      "explanation": "The function mixes three PCA components with different weights to create diverse angle values for each qubit. The weights are chosen such that the sum of the absolute values is less than or equal to 1. This ensures that the final angle is within the range [0, 2\u03c0]."
+    },
+    {
+      "trial": 4,
+      "baseline_acc": 0.88,
+      "claude_acc": 0.8,
+      "improvement": -9.090909090909086,
+      "function": "[np.clip(np.pi*(0.6*x[i%len(x)] + 0.3*x[(i+5)%len(x)] + 0.1*x[(i+10)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+      "explanation": "This function uses a weighted combination of three different PCA features to generate a unique angle for each qubit. The coefficients are chosen to sum up to around 1.0, with the first feature getting the highest weight, followed by the second and third features. This allows the function to capture a diversity of information from the input features."
+    },
+    {
+      "trial": 5,
+      "baseline_acc": 0.82,
+      "claude_acc": 0.54,
+      "improvement": -34.14634146341463,
+      "function": "[np.clip(np.pi*(0.5*x[i%len(x)] + 0.3*x[(i+3)%len(x)] + 0.2*x[(i+7)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+      "explanation": "This encoding function uses a mix of different PCA components with varying weights to capture diverse information. The weights are chosen such that alpha > beta > gamma, ensuring the angles are distinct across the 10 qubits."
+    }
+  ],
+  "best_trial": {
+    "trial": 1,
+    "baseline_acc": 0.86,
+    "claude_acc": 0.8,
+    "improvement": -6.9767441860465045,
+    "function": "[np.clip(np.pi*(0.6*x[i%len(x)] + 0.3*x[(i+3)%len(x)] + 0.1*x[(i+7)%len(x)]), 0, 2*np.pi) for i in range(10)]",
+    "explanation": "This encoding uses a weighted combination of the current feature, the feature 3 indices later, and the feature 7 indices later. The weights are chosen to sum to around 1 and provide a diverse set of angles across the 10 qubits."
+  },
+  "avg_baseline": 0.82,
+  "avg_claude": 0.724,
+  "avg_improvement": -11.554269933229238,
+  "total_time_seconds": 89.43349480628967
+}

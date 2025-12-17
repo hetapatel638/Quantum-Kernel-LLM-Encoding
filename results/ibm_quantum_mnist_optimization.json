@@ -1,0 +1,172 @@
+{
+  "config": {
+    "n_train": 600,
+    "n_test": 200,
+    "n_pca": 80,
+    "architecture": "6-layer quantum circuit, 10 qubits",
+    "optimization_team": "IBM Quantum Engineering"
+  },
+  "results": {
+    "baseline": {
+      "name": "Baseline (\u03c0\u00b7x, linear, C=1.0)",
+      "accuracy": 0.85,
+      "config": {
+        "qubits": 10,
+        "entanglement": "linear"
+      },
+      "svm_c": 1.0,
+      "time": 6.869384050369263,
+      "metrics": {
+        "accuracy": 0.85,
+        "f1_score": 0.8491671801948842,
+        "precision": 0.8560907875019715,
+        "recall": 0.85
+      }
+    },
+    "entanglement_linear": {
+      "name": "Baseline + linear entanglement",
+      "accuracy": 0.855,
+      "config": {
+        "qubits": 10,
+        "entanglement": "linear"
+      },
+      "svm_c": 10.0,
+      "time": 6.706143856048584,
+      "metrics": {
+        "accuracy": 0.855,
+        "f1_score": 0.8540346923672172,
+        "precision": 0.8549222060833902,
+        "recall": 0.855
+      }
+    },
+    "entanglement_full": {
+      "name": "Baseline + full entanglement",
+      "accuracy": 0.86,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.594062089920044,
+      "metrics": {
+        "accuracy": 0.86,
+        "f1_score": 0.8586039904617593,
+        "precision": 0.8598794008494086,
+        "recall": 0.86
+      }
+    },
+    "claude_haiku_optimized": {
+      "name": "Claude Haiku API (Temperature 0.95)",
+      "accuracy": 0.535,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.510268926620483,
+      "metrics": {
+        "accuracy": 0.535,
+        "f1_score": 0.5325144238739984,
+        "precision": 0.5371189668174963,
+        "recall": 0.535
+      }
+    },
+    "strategy_adaptive_amplitude": {
+      "name": "adaptive_amplitude",
+      "accuracy": 0.855,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.623418092727661,
+      "metrics": {
+        "accuracy": 0.855,
+        "f1_score": 0.8541581970626088,
+        "precision": 0.8581669405413987,
+        "recall": 0.855
+      }
+    },
+    "strategy_fourier_features": {
+      "name": "fourier_features",
+      "accuracy": 0.765,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.62863802909851,
+      "metrics": {
+        "accuracy": 0.765,
+        "f1_score": 0.7642474134547932,
+        "precision": 0.7732924085576259,
+        "recall": 0.765
+      }
+    },
+    "strategy_magnitude_phase": {
+      "name": "magnitude_phase",
+      "accuracy": 0.875,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.506044864654541,
+      "metrics": {
+        "accuracy": 0.875,
+        "f1_score": 0.8750093008190989,
+        "precision": 0.8761091437833716,
+        "recall": 0.875
+      }
+    },
+    "strategy_hierarchical_scale": {
+      "name": "hierarchical_scale",
+      "accuracy": 0.88,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.607178926467896,
+      "metrics": {
+        "accuracy": 0.88,
+        "f1_score": 0.8795043501449057,
+        "precision": 0.8806923309178744,
+        "recall": 0.88
+      }
+    },
+    "strategy_entropy_weighted": {
+      "name": "entropy_weighted",
+      "accuracy": 0.875,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.599536895751953,
+      "metrics": {
+        "accuracy": 0.875,
+        "f1_score": 0.8742753486104229,
+        "precision": 0.874664699338927,
+        "recall": 0.875
+      }
+    },
+    "final_optimized": {
+      "name": "Optimized hierarchical_scale",
+      "accuracy": 0.88,
+      "config": {
+        "qubits": 10,
+        "entanglement": "full"
+      },
+      "svm_c": 10.0,
+      "time": 8.506924867630005,
+      "metrics": {
+        "accuracy": 0.88,
+        "f1_score": 0.8795043501449057,
+        "precision": 0.8806923309178744,
+        "recall": 0.88
+      }
+    }
+  },
+  "timestamp": "2025-12-16 08:27:46"
+}

@@ -1,0 +1,58 @@
+{
+  "config": {
+    "n_train": 800,
+    "n_test": 300,
+    "n_pca": 80
+  },
+  "results": {
+    "baseline": {
+      "name": "Baseline",
+      "accuracy": 0.8966666666666666,
+      "config": "10 qubits, linear entanglement",
+      "time": 16.564643144607544
+    },
+    "full_entanglement": {
+      "name": "Full Entanglement",
+      "accuracy": 0.89,
+      "config": "10 qubits, full entanglement",
+      "time": 22.047879934310913
+    },
+    "power_scaling": {
+      "name": "Power Scaling (0.7)",
+      "accuracy": 0.8966666666666666,
+      "config": "10 qubits, linear entanglement",
+      "time": 15.67237114906311
+    },
+    "phase_modulation": {
+      "name": "Phase Modulation",
+      "accuracy": 0.7433333333333333,
+      "config": "10 qubits, linear entanglement",
+      "time": 15.478800773620605
+    },
+    "adaptive_weighting": {
+      "name": "Adaptive Weighting",
+      "accuracy": 0.86,
+      "config": "10 qubits, linear entanglement",
+      "time": 15.512650966644287
+    },
+    "dual_scale": {
+      "name": "Dual-Scale",
+      "accuracy": 0.8933333333333333,
+      "config": "10 qubits, linear entanglement",
+      "time": 16.723045825958252
+    },
+    "log_scaling": {
+      "name": "Log Scaling",
+      "accuracy": 0.8966666666666666,
+      "config": "10 qubits, linear entanglement",
+      "time": 15.527997255325317
+    },
+    "combined_weighted": {
+      "name": "Combined Weighted",
+      "accuracy": 0.7966666666666666,
+      "config": "10 qubits, linear entanglement",
+      "time": 15.6521737575531
+    }
+  },
+  "timestamp": "2025-12-16 00:12:55"
+}

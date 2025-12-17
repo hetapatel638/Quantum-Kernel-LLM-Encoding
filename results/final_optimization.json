@@ -1,0 +1,15 @@
+{
+  "fashion_mnist": {
+    "dataset": "fashion_mnist",
+    "accuracy": 0.82,
+    "encoding": "Multi-scale",
+    "svm_c": 5.0,
+    "n_pca": 200
+  },
+  "cifar10": {
+    "dataset": "cifar10",
+    "accuracy": 0.382,
+    "encoding": "Magnitude-Phase",
+    "n_pca": 256
+  }
+}

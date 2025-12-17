@@ -1,0 +1,16 @@
+{
+  "dataset": "fashion_mnist",
+  "n_train": 800,
+  "n_test": 300,
+  "n_pca": 160,
+  "baseline_accuracy": 0.8,
+  "best_encoding": "Phase Shift (+0.3\u03c0)",
+  "best_accuracy": 0.8,
+  "all_encodings": {
+    "Power Scaling (0.7)": 0.7866666666666666,
+    "Power Scaling (0.6)": 0.7866666666666666,
+    "Phase Shift (+0.3\u03c0)": 0.8,
+    "Differential": 0.79,
+    "Weighted Features": 0.7966666666666666
+  }
+}

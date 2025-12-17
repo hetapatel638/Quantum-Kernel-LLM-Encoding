@@ -1,0 +1,20 @@
+{
+  "dataset": "mnist",
+  "n_train": 800,
+  "n_test": 300,
+  "n_pca": 80,
+  "results": {
+    "baseline": {
+      "accuracy": 0.9066666666666666,
+      "time": 51.57319498062134,
+      "description": "Simple linear: \u03b8\u1d62 = \u03c0\u00b7x\u1d62"
+    },
+    "llm_generated": {
+      "accuracy": 0.8933333333333333,
+      "time": 52.044392108917236,
+      "description": "Fallback encoding",
+      "function": "<function OptimizedMNISTEncoding._fallback_encoding.<locals>.encoding at 0x323f4ec00>"
+    }
+  },
+  "timestamp": "2025-12-16 08:43:14"
+}

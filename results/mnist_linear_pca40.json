@@ -1,0 +1,60 @@
+{
+  "dataset": "mnist",
+  "template_family": "linear",
+  "n_pca": 40,
+  "n_train": 300,
+  "n_test": 100,
+  "baseline": {
+    "classification": {
+      "accuracy": 0.84,
+      "f1_score": 0.8391021367873939,
+      "precision": 0.8527857142857143,
+      "recall": 0.84
+    },
+    "complexity": {
+      "n_qubits": 10,
+      "circuit_depth": 1,
+      "gate_count": 10,
+      "qubit_depth_product": 10
+    },
+    "kernel_quality": {
+      "kernel_alignment": 0.4762466004259671,
+      "condition_number": 14619.68470175829,
+      "effective_rank": 79.64461379472444,
+      "mean_kernel_value": 0.14467879462064112,
+      "std_kernel_value": 0.13741148447221196
+    }
+  },
+  "llm_generated": {
+    "classification": {
+      "accuracy": 0.82,
+      "f1_score": 0.8155698021143942,
+      "precision": 0.8268522588522589,
+      "recall": 0.82
+    },
+    "complexity": {
+      "n_qubits": 10,
+      "circuit_depth": 1,
+      "gate_count": 10,
+      "qubit_depth_product": 10
+    },
+    "kernel_quality": {
+      "kernel_alignment": 0.4606554327841574,
+      "condition_number": 18606.47764640551,
+      "effective_rank": 74.18128934228521,
+      "mean_kernel_value": 0.15409567567797652,
+      "std_kernel_value": 0.14153924831665587
+    }
+  },
+  "llm_function": "[np.clip(np.pi * x[i%len(x)]**0.8 + 0.2*np.pi*(i/10), 0, 2*np.pi) for i in range(10)]",
+  "llm_explanation": "This encoding uses a combination of amplitude scaling (x[i]**0.8) to give more resolution to smaller feature values, and a phase shift term (0.2*pi*(i/10)) to introduce some structured differences between the qubit angles. The amplitude scaling helps capture the important features, while the phase shift creates interference patterns that can aid in classification. The coefficients are chosen to keep the overall sum around 1 for good normalization.",
+  "comparison": {
+    "baseline_accuracy": 0.84,
+    "llm_accuracy": 0.82,
+    "absolute_improvement": -0.020000000000000018,
+    "relative_improvement_pct": -2.380952380952383,
+    "llm_is_better": false
+  },
+  "total_time": 13.159884929656982,
+  "status": "success"
+}
