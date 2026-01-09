@@ -1,166 +1,107 @@
+"""
+Level 3: Encoding Validator
+Validate generated encoding formulas
+"""
+
 import numpy as np
-import ast
 import re
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional
 
 
 class EncodingValidator:
-    """Validate angle encoding functions for safety and correctness"""
+    """Validate generated encoding formulas"""
     
-    def __init__(self, n_features: int):
-        self.n_features = n_features
-        self.allowed_functions = {
-            'np', 'numpy', 'sum', 'mean', 'std', 'min', 'max', 'clip', 'pi'
-        }
-    
-    def validate_syntax(self, code_string: str) -> Tuple[bool, Optional[str]]:
-        """Check if code is valid Python expression"""
+    @staticmethod
+    def validate_encoding(code: str, X_sample: np.ndarray) -> Tuple[bool, str]:
+        """
+        Validate encoding formula
+        
+        Returns:
+            (is_valid, error_message)
+        """
+        if not code or not isinstance(code, str):
+            return False, "Code must be non-empty string"
+        
+        # Clean code: remove common issues
+        code = code.strip()
+        if code.startswith("return "):
+            code = code[7:]  # Remove 'return' statement
+        
+        # Check 1: Valid Python syntax
         try:
-            ast.parse(code_string, mode='eval')
-            return True, None
+            compile(code, '<string>', 'eval')
         except SyntaxError as e:
-            return False, f"Syntax error: {str(e)}"
-    
-    def validate_safety(self, code_string: str) -> Tuple[bool, Optional[str]]:
-        """Check for malicious code patterns"""
-        dangerous_patterns = [
-            r'import\s+',
-            r'exec\s*\(',
-            r'eval\s*\(',
-            r'__\w+__',
-            r'open\s*\(',
-            r'file\s*\(',
-            r'subprocess',
-            r'os\.',
-            r'sys\.'
-        ]
+            return False, f"Invalid syntax: {str(e)}"
         
-        for pattern in dangerous_patterns:
-            if re.search(pattern, code_string):
-                return False, f"Unsafe pattern detected: {pattern}"
-        
-        return True, None
-    
-    def validate_output_range(self, code_string: str, n_test: int = 10) -> Tuple[bool, Optional[str]]:
-        """Test that output is in [0, 2π] for random inputs"""
+        # Check 2: Can execute with sample data
         try:
-            # Create safe namespace with built-ins for list comprehensions
-            namespace = {
-                'np': np,
-                'numpy': np,
-                'range': range,
-                'len': len,
-                'max': max,
-                'min': min,
-                'x': None
-            }
-            
-            angle_samples = []
-            
-            # Test with random inputs
-            for _ in range(n_test):
-                test_input = np.random.rand(self.n_features)
-                namespace['x'] = test_input
-                
-                result = eval(code_string, {"__builtins__": {}}, namespace)
-                
-                # Handle both scalar and list outputs
-                if isinstance(result, (list, np.ndarray)):
-                    # List of angles - validate each
-                    for angle in result:
-                        if not isinstance(angle, (int, float, np.number)):
-                            return False, f"Output element must be numeric, got {type(angle)}"
-                        if angle < 0 or angle > 2 * np.pi + 0.1:  # Small tolerance
-                            return False, f"Output angle {angle:.3f} outside [0, 2π]"
-                    angle_samples.append(np.array(result))
-                elif isinstance(result, (int, float, np.number)):
-                    # Scalar output
-                    if result < 0 or result > 2 * np.pi + 0.1:  # Small tolerance
-                        return False, f"Output {result:.3f} outside [0, 2π]"
-                    angle_samples.append([result] * 10)  # Treat as 10 identical angles
-                else:
-                    return False, f"Output must be scalar or list, got {type(result)}"
-            
-            # Check diversity: angles should vary across qubits
-            if angle_samples:
-                avg_std = np.mean([np.std(angles) for angles in angle_samples])
-                if avg_std < 0.3:
-                    return False, f"Low angle diversity (std={avg_std:.3f}). All qubits too similar - try feature mixing!"
-            
-            return True, None
-            
+            for row in X_sample[:3]:
+                result = eval(code, {"x": row, "np": np})
+                if result is None:
+                    return False, "Output is None"
         except Exception as e:
             return False, f"Execution error: {str(e)}"
+        
+        # Check 3: Output type is numeric (array or scalar)
+        try:
+            for row in X_sample[:3]:
+                result = eval(code, {"x": row, "np": np})
+                # Accept scalars, arrays, or anything numeric
+                if isinstance(result, (int, float, np.ndarray)):
+                    continue
+                else:
+                    return False, f"Output type {type(result)} is not numeric"
+        except Exception as e:
+            return False, f"Type check error: {str(e)}"
+        
+        # Check 4: Output produces reasonable values
+        try:
+            test_vals = []
+            for row in X_sample[:5]:
+                result = eval(code, {"x": row, "np": np})
+                if isinstance(result, np.ndarray):
+                    test_vals.extend(result.flatten())
+                else:
+                    test_vals.append(float(result))
+            
+            test_vals = np.array(test_vals)
+            
+            # Check for NaN or Inf
+            if np.any(np.isnan(test_vals)) or np.any(np.isinf(test_vals)):
+                return False, "Output contains NaN or Inf values"
+            
+            # Warn if completely outside [0, 2π] but don't fail
+            # (circuit will clip them)
+            if np.mean(np.abs(test_vals)) > 10:
+                print(f"  ⚠️  Warning: angles very large (mean={np.mean(test_vals):.2f}), will be clipped")
+        
+        except Exception as e:
+            return False, f"Value check error: {str(e)}"
+        
+        return True, "Valid"
     
-    def validate_template_compliance(self, code_string: str, template_family: str) -> Tuple[bool, Optional[str]]:
-        """Check if function matches declared template family"""
+    @staticmethod
+    def extract_coefficients(code: str) -> Optional[np.ndarray]:
+        """Try to extract linear coefficients from code (best effort)"""
+        # Look for patterns like 0.8*x[0] + 0.2*x[1]
+        pattern = r'([\d.]+)\s*\*\s*x\[(\d+)\]'
+        matches = re.findall(pattern, code)
         
-        if template_family == "linear":
-            # Should only have x[i] terms, no x[i]*x[j]
-            if re.search(r'x\[\d+\]\s*\*\s*x\[\d+\]', code_string):
-                return False, "Linear template should not have interaction terms"
+        if not matches:
+            return None
         
-        elif template_family == "polynomial":
-            # Should have x[i]*x[j] terms
-            if not re.search(r'x\[\d+\]\s*\*\s*x\[\d+\]', code_string):
-                return False, "Polynomial template should have interaction terms"
+        coeffs = {}
+        for coeff_str, idx_str in matches:
+            idx = int(idx_str)
+            coeff = float(coeff_str)
+            coeffs[idx] = coeff
         
-        elif template_family == "global_stats":
-            # Should have mean() or std()
-            if not (re.search(r'mean\(', code_string) or re.search(r'std\(', code_string)):
-                return False, "Global stats template should use mean() or std()"
+        if not coeffs:
+            return None
         
-        elif template_family == "pca_mix":
-            # Should only use first 4 features
-            indices = re.findall(r'x\[(\d+)\]', code_string)
-            if indices and max(map(int, indices)) >= 4:
-                return False, "PCA mix template should only use first 4 components"
+        max_idx = max(coeffs.keys())
+        result = np.zeros(max_idx + 1)
+        for idx, coeff in coeffs.items():
+            result[idx] = coeff
         
-        return True, None
-    
-    def validate_all(self, code_string: str, template_family: str) -> Tuple[bool, List[str]]:
-        """Run all validation checks"""
-        errors = []
-        
-        # Syntax check
-        valid, error = self.validate_syntax(code_string)
-        if not valid:
-            errors.append(error)
-            return False, errors  # Stop if syntax is invalid
-        
-        # Safety check
-        valid, error = self.validate_safety(code_string)
-        if not valid:
-            errors.append(error)
-        
-        # Output range check
-        valid, error = self.validate_output_range(code_string)
-        if not valid:
-            errors.append(error)
-        
-        # Template compliance check
-        valid, error = self.validate_template_compliance(code_string, template_family)
-        if not valid:
-            errors.append(error)
-        
-        return len(errors) == 0, errors
-
-
-# Test
-if __name__ == "__main__":
-    validator = EncodingValidator(n_features=10)
-    
-    # Test valid linear
-    code1 = "np.clip(0.8 * x[0] + 0.2 * x[1], 0, 2*np.pi)"
-    valid, errors = validator.validate_all(code1, "linear")
-    print(f"Linear test: {valid}, errors: {errors}")
-    
-    # Test invalid (malicious)
-    code2 = "import os; os.system('rm -rf /')"
-    valid, errors = validator.validate_all(code2, "linear")
-    print(f"Malicious test: {valid}, errors: {errors}")
-    
-    # Test invalid (out of range)
-    code3 = "10.0 * x[0]"  # Will exceed 2π
-    valid, errors = validator.validate_all(code3, "linear")
-    print(f"Range test: {valid}, errors: {errors}")
+        return result

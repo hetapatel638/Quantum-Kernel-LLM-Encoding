@@ -1,0 +1,32 @@
+{
+  "dataset": "mnist",
+  "config": {
+    "n_train": 1200,
+    "n_test": 400,
+    "n_pca": 80,
+    "circuit": "10 qubits, 12 layers, linear entanglement",
+    "svm_tuned": true
+  },
+  "results": {
+    "baseline": {
+      "accuracy": 0.905,
+      "time": 987.95,
+      "method": "\u03b8\u1d62 = \u03c0\u00b7x\u1d62"
+    },
+    "hierarchical": {
+      "accuracy": 0.8875,
+      "time": 5815.95,
+      "method": "\u03b8\u1d62 = \u03c0\u00b7x\u1d62\u00b7var\u1d62 + 0.5\u00b7(x\u1d62\u00b2\u00b7var\u1d62)"
+    },
+    "claude_optimized": {
+      "accuracy": 0.875,
+      "time": 1005.51,
+      "method": "Claude Optimized: Importance + Quadratic Enhancement"
+    }
+  },
+  "best": {
+    "accuracy": 0.905,
+    "method": "baseline"
+  },
+  "timestamp": "2025-12-18 13:54:29"
+}

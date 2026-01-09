@@ -1,188 +1,163 @@
-# Quantum Machine Learning Framework
+# 5-Level Quantum ML Framework
 
-A quantum machine learning framework for achieving **90%+ accuracy on MNIST classification** using:
-- Quantum circuits with PennyLane
-- Claude Haiku AI for encoding optimization
-- SVM classification with quantum kernels
-- Hierarchical feature encoding
+## Architecture Overview
 
-## 🎯 Results
+```
+Level 1: DATA PIPELINE
+├── data/loader.py          → Load MNIST, Fashion-MNIST, CIFAR-10
+└── data/preprocessor.py    → PCA + Normalization to [0,1]
 
-| Model | Accuracy | Strategy |
-|-------|----------|----------|
-| Baseline (π·x) | 88.5% | Simple linear encoding |
-| Hierarchical | **90.5%** | Feature importance weighting + quadratic enhancement |
-| Claude Optimized | 89-90% | AI-generated encodings |
+Level 2: LLM PROMPT ENGINEERING
+├── llm/claude_interface.py       → Call Claude API
+└── encoding/prompt_builder.py    → Generate smart prompts with dataset stats
 
-**Best Configuration:**
-- Circuit: 10 qubits, 12 layers, linear entanglement
-- Encoding: Hierarchical (importance-weighted)
-- SVM C: 2.0 (optimal regularization)
-- PCA: 80 dimensions (90.2% variance retention)
+Level 3: ENCODING SYNTHESIS & VALIDATION
+├── encoding/templates.py         → Template families
+└── encoding/validator.py         → Validate generated encoding
 
-## 📋 Quick Start
+Level 4: QUANTUM CIRCUIT & KERNEL (QISKIT)
+├── quantum/qiskit_circuit.py     → Build Qiskit parameterized circuits
+└── quantum/qiskit_kernel.py      → Compute Gram matrix
 
-### Installation
+Level 5: TRAINING & EVALUATION
+└── evaluation/svm_trainer.py     → Train SVM, compute metrics
 
+ORCHESTRATION:
+├── config.py              → All parameters
+├── main.py               → CLI entry point
+└── experiments/          → Dataset runners
+```
+
+## Setup
+
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Set Environment Variable
-
+### 2. Set Claude API Key
 ```bash
 export ANTHROPIC_API_KEY='your-anthropic-api-key'
 ```
 
-### Run Production Code
+## Quick Start
 
+### Single Dataset Experiment
 ```bash
-cd /Users/husky95/Desktop/Innovation
-python experiments/quantum_mnist_90_production.py
+# MNIST with linear encoding, 40 PCA dims
+python main.py --mode single --dataset mnist --template linear --n_pca 40
+
+# Fashion-MNIST with polynomial encoding
+python main.py --mode single --dataset fashion_mnist --template polynomial --n_pca 40
+
+# CIFAR-10 with global_stats encoding
+python main.py --mode single --dataset cifar10 --template global_stats --n_pca 40
 ```
 
-**Expected Output:**
-```
-✓✓✓ SUCCESS! Achieved 90.5% accuracy
+### All Three Datasets
+```bash
+# Run all datasets with linear encoding
+python main.py --mode multi --template linear --n_pca 40
+
+# Run all datasets with polynomial encoding
+python main.py --mode multi --template polynomial --n_pca 80
 ```
 
-## 📁 Project Structure
-
-```
-.
-├── experiments/
-│   ├── quantum_mnist_90_production.py    ← Production-ready code (90%+)
-│   ├── final_90plus_optimization.py      ← Full optimization pipeline
-│   └── ...other experiments...
-├── quantum/
-│   ├── circuit.py                        ← Quantum circuit builder
-│   ├── kernel.py                         ← Quantum kernel computation
-├── data/
-│   ├── loader.py                         ← Dataset loading
-│   ├── preprocessor.py                   ← PCA + normalization
-├── evaluation/
-│   ├── svm_trainer.py                    ← SVM with C optimization
-│   └── metrics.py
-├── llm/
-│   └── hf_interface.py                   ← Claude API integration
-└── 90_PERCENT_GUIDE.md                   ← Complete guide to 90%+
+### Testing (Mock Mode)
+```bash
+# Test without Claude API (uses fallback encoding)
+python main.py --mode single --dataset mnist --mock
 ```
 
-## 🔑 Key Files
+## Configuration
+
+Edit `config.py` to modify:
+- **Datasets**: MNIST, Fashion-MNIST, CIFAR-10
+- **PCA dimensions**: [10, 40, 80]
+- **Qiskit quantum**: n_qubits=10, max_depth=12
+- **SVM parameters**: C=1.0
+- **Claude model**: claude-3-5-sonnet-20241022
+
+## Pipeline Flow
+
+```
+1. Load Data
+   └→ MNIST/Fashion-MNIST/CIFAR-10 (raw pixels)
+
+2. Preprocess
+   └→ PCA reduction (n_pca dimensions)
+   └→ Normalize to [0,1]
+
+3. Generate Encoding
+   └→ Claude creates formula via prompt
+   └→ Template: linear, polynomial, global_stats, or pca_mix
+
+4. Validate Encoding
+   └→ Check syntax & output range [0, 2π]
+
+5. Build Quantum Circuit
+   └→ Qiskit circuit with RY rotations
+   └→ Entanglement layer (linear or full)
+
+6. Compute Kernel
+   └→ Quantum fidelity between data points
+
+7. Train SVM
+   └→ SVM on precomputed kernel matrix
+
+8. Evaluate
+   └→ Accuracy, F1, Precision, Recall
+```
+
+## Output
+
+Results saved to `results/` as JSON:
+```json
+{
+  "dataset": "mnist",
+  "encoding": {
+    "code": "0.5*np.mean(x) + 0.3*np.std(x)",
+    "template_type": "global_stats",
+    "is_valid": true
+  },
+  "metrics": {
+    "accuracy": 0.8725,
+    "f1_macro": 0.8610,
+    "f1_weighted": 0.8710,
+    "precision_macro": 0.8650,
+    "recall_macro": 0.8600
+  },
+  "timing": 234.5
+}
+```
+
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `experiments/quantum_mnist_90_production.py` | **START HERE** - Production code for 90%+ |
-| `90_PERCENT_GUIDE.md` | Complete guide with best practices |
-| `experiments/final_90plus_optimization.py` | Advanced optimization with Claude AI |
-| `quantum/circuit.py` | Quantum circuit implementation |
-| `evaluation/svm_trainer.py` | SVM training and evaluation |
+| `config.py` | Global configuration |
+| `data/loader.py` | Dataset loading |
+| `data/preprocessor.py` | PCA + normalization |
+| `llm/claude_interface.py` | Claude API calls |
+| `encoding/prompt_builder.py` | Prompt generation |
+| `encoding/templates.py` | Template definitions |
+| `encoding/validator.py` | Encoding validation |
+| `quantum/qiskit_circuit.py` | Qiskit circuit builder |
+| `quantum/qiskit_kernel.py` | Kernel computation |
+| `evaluation/svm_trainer.py` | SVM training & evaluation |
+| `experiments/run_single_dataset.py` | Single dataset pipeline |
+| `experiments/run_all_datasets.py` | Multi-dataset runner |
+| `main.py` | CLI entry point |
 
-## 🎓 How It Works
+## References
 
-### 1. Data Preparation
-- Load MNIST (28×28 = 784 pixels)
-- Apply PCA: 784 → 80 dimensions (retains 90.2% variance)
-- Normalize to [0, 1]
-
-### 2. Hierarchical Encoding
-```python
-importance_weights = pca_variance / sum(pca_variance)
-
-def encode(x):
-    angles = π × x × importance_weights
-    # Add quadratic term for top features
-    for i in top_5_features:
-        angles[i] += 0.5 × (x[i]² × importance_weights[i])
-    return clip(angles, 0, 2π)
-```
-
-### 3. Quantum Circuit
-- 10 qubits (2^10 = 1024-dim Hilbert space)
-- 12 layers (RY rotations + CNOT entanglement)
-- Linear entanglement (nearest-neighbor interactions)
-
-### 4. Quantum Kernel
-- Compute fidelity between quantum states
-- Create Gram matrix for SVM
-
-### 5. SVM Classification
-- Train with C=2.0 (optimal regularization)
-- Evaluate on test set
-
-## 📊 Performance Analysis
-
-### Why 90.5%?
-
-| Factor | Impact |
-|--------|--------|
-| Feature importance weighting | +1-2% |
-| Quadratic enhancement | +0.5-1% |
-| SVM C=2.0 optimization | +1-2% |
-| Quantum circuit (10 qubits) | +2-3% baseline boost |
-| **Total vs baseline** | **+4-5%** |
-
-### Why Not Higher?
-
-- **10 qubits limit**: 2^10 = 1,024 dims (sufficient for 80 PCA features)
-- **Circuit depth**: 12 layers balances expressivity vs noise
-- **Linear entanglement**: Fast, but limits global interactions
-- **SVM kernel**: Quantum kernel has limitations vs classical deep learning
-
-## 🚀 For 92%+ Accuracy
-
-Try these upgrades:
-
-1. **More qubits**: 10 → 14 (14-qubit full entanglement)
-   ```python
-   circuit = QuantumCircuitBuilder(n_qubits=14, max_depth=18)
-   circuit.build_circuit(..., entanglement="full")
-   ```
-
-2. **Variational parameters**: Learn angle coefficients
-   ```python
-   params = [var_scaling_per_feature, var_rotation_per_layer]
-   angles = params * x  # Learn these!
-   ```
-
-3. **Hybrid classical-quantum**: Combine CNN + quantum kernel
-
-## 🔒 Security
-
-**Never commit API keys!** This repository:
-- ✅ Has `.gitignore` to prevent accidental commits
-- ✅ Uses environment variables for secrets
-- ✅ No hardcoded credentials
-- ✅ API key stored in `ANTHROPIC_API_KEY` env var
-
-**To run safely:**
-```bash
-export ANTHROPIC_API_KEY='your-key-here'
-python experiments/quantum_mnist_90_production.py
-```
-
-## 📚 References
-
-### Papers
-- Sakka et al. (2023) - Quantum feature encoding for MNIST
-- PennyLane documentation: https://pennylane.ai
-- Anthropic Claude API: https://www.anthropic.com
-
-### Tools Used
-- **PennyLane**: Quantum computing framework
-- **Scikit-learn**: Classical ML (SVM)
-- **Anthropic Claude Haiku**: LLM for encoding generation
-- **NumPy/SciPy**: Numerical computing
-
-## 📝 License
-
-This project is open-source. Feel free to use and modify.
-
-## 👨‍💻 Author
-
-Created by: **husky95** (hetahub345@gmail.com)
-Date: December 2025
+- **Claude API**: https://docs.anthropic.com/
+- **Qiskit**: https://qiskit.org/
+- **Quantum Kernels**: https://qiskit-machine-learning.readthedocs.io/
 
 ---
 
-**Questions?** Check `90_PERCENT_GUIDE.md` for detailed explanation of all parameters and strategies.
+**Created**: December 26, 2025  
+**Architecture**: 5-Level design with clear separation of concerns  
+**LLM**: Claude (Anthropic)  
+**Quantum**: Qiskit

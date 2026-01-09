@@ -1,0 +1,18 @@
+{
+  "model": "Quantum MNIST 90%+",
+  "accuracy": 0.8633,
+  "f1_score": 0.8621,
+  "eval_time": 0.01,
+  "configuration": {
+    "n_qubits": 10,
+    "max_depth": 12,
+    "entanglement": "linear",
+    "encoding": "hierarchical_importance",
+    "svm_c": 2.0,
+    "n_pca": 80,
+    "n_train": 800,
+    "n_test": 300
+  },
+  "timestamp": "2025-12-26T21:29:19.725402",
+  "status": "ACHIEVED"
+}

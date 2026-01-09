@@ -1,93 +1,57 @@
+"""
+Level 1: Data Loader
+Handles MNIST, Fashion-MNIST, CIFAR-10 loading
+"""
+
 import numpy as np
 from sklearn.datasets import fetch_openml
-from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10
 from typing import Tuple
 
 
 class DatasetLoader:
-    """Load and prepare datasets for quantum encoding experiments"""
+    """Load and return datasets in consistent format"""
     
     @staticmethod
-    def load_mnist(n_train: int = 10000, n_test: int = 10000) -> Tuple:
-        """Load MNIST dataset"""
-        print("Loading MNIST...")
-        X, y = fetch_openml('mnist_784', version=1, return_X_y=True, parser='auto')
+    def load_dataset(dataset_name: str, n_train: int, n_test: int, 
+                     random_seed: int = 42) -> Tuple[np.ndarray, np.ndarray, 
+                                                       np.ndarray, np.ndarray]:
+        """
+        Load dataset: MNIST, Fashion-MNIST, or CIFAR-10
         
-        # Convert to numpy and normalize
-        X = np.array(X, dtype=np.float32) / 255.0
-        y = np.array(y, dtype=np.int32)
+        Returns:
+            (X_train, y_train, X_test, y_test) as flattened arrays
+        """
+        np.random.seed(random_seed)
         
-        # Shuffle
-        indices = np.random.permutation(len(X))
-        X, y = X[indices], y[indices]
-        
-        # Split
-        X_train = X[:n_train]
-        y_train = y[:n_train]
-        X_test = X[n_train:n_train + n_test]
-        y_test = y[n_train:n_train + n_test]
-        
-        print(f"MNIST loaded: train={X_train.shape}, test={X_test.shape}")
-        return X_train, X_test, y_train, y_test
-    
-    @staticmethod
-    def load_fashion_mnist(n_train: int = 10000, n_test: int = 10000) -> Tuple:
-        """Load Fashion-MNIST dataset"""
-        print("Loading Fashion-MNIST...")
-        X, y = fetch_openml('Fashion-MNIST', version=1, return_X_y=True, parser='auto')
-        
-        X = np.array(X, dtype=np.float32) / 255.0
-        y = np.array(y, dtype=np.int32)
-        
-        indices = np.random.permutation(len(X))
-        X, y = X[indices], y[indices]
-        
-        X_train = X[:n_train]
-        y_train = y[:n_train]
-        X_test = X[n_train:n_train + n_test]
-        y_test = y[n_train:n_train + n_test]
-        
-        print(f"Fashion-MNIST loaded: train={X_train.shape}, test={X_test.shape}")
-        return X_train, X_test, y_train, y_test
-    
-    @staticmethod
-    def load_cifar10(n_train: int = 10000, n_test: int = 10000) -> Tuple:
-        """Load CIFAR-10 dataset"""
-        print("Loading CIFAR-10...")
-        (X_train, y_train), (X_test, y_test) = cifar10.load_data()
-        
-        # Flatten images and normalize
-        X_train = X_train.reshape(X_train.shape[0], -1).astype(np.float32) / 255.0
-        X_test = X_test.reshape(X_test.shape[0], -1).astype(np.float32) / 255.0
-        y_train = y_train.flatten()
-        y_test = y_test.flatten()
-        
-        # Subsample
-        X_train = X_train[:n_train]
-        y_train = y_train[:n_train]
-        X_test = X_test[:n_test]
-        y_test = y_test[:n_test]
-        
-        print(f"CIFAR-10 loaded: train={X_train.shape}, test={X_test.shape}")
-        return X_train, X_test, y_train, y_test
-    
-    @classmethod
-    def load_dataset(cls, dataset_name: str, n_train: int = 10000, n_test: int = 10000):
-        """Universal loader"""
-        loaders = {
-            "mnist": cls.load_mnist,
-            "fashion_mnist": cls.load_fashion_mnist,
-            "cifar10": cls.load_cifar10
-        }
-        
-        if dataset_name not in loaders:
+        if dataset_name == "mnist":
+            (X_train_full, y_train_full), (X_test_full, y_test_full) = mnist.load_data()
+        elif dataset_name == "fashion_mnist":
+            (X_train_full, y_train_full), (X_test_full, y_test_full) = fashion_mnist.load_data()
+        elif dataset_name == "cifar10":
+            (X_train_full, y_train_full), (X_test_full, y_test_full) = cifar10.load_data()
+            y_train_full = y_train_full.flatten()
+            y_test_full = y_test_full.flatten()
+        else:
             raise ValueError(f"Unknown dataset: {dataset_name}")
         
-        return loaders[dataset_name](n_train, n_test)
-
-
-# Test
-if __name__ == "__main__":
-    loader = DatasetLoader()
-    X_train, X_test, y_train, y_test = loader.load_dataset("mnist", 1000, 200)
-    print(f"Test passed: {X_train.shape}, {y_train.shape}")
+        # Flatten images
+        X_train_full = X_train_full.reshape(X_train_full.shape[0], -1).astype(np.float32)
+        X_test_full = X_test_full.reshape(X_test_full.shape[0], -1).astype(np.float32)
+        
+        # Sample if needed
+        if n_train < len(X_train_full):
+            idx_train = np.random.choice(len(X_train_full), n_train, replace=False)
+            X_train = X_train_full[idx_train]
+            y_train = y_train_full[idx_train]
+        else:
+            X_train, y_train = X_train_full, y_train_full
+        
+        if n_test < len(X_test_full):
+            idx_test = np.random.choice(len(X_test_full), n_test, replace=False)
+            X_test = X_test_full[idx_test]
+            y_test = y_test_full[idx_test]
+        else:
+            X_test, y_test = X_test_full, y_test_full
+        
+        return X_train, y_train, X_test, y_test

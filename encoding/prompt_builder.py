@@ -1,142 +1,159 @@
+"""
+Level 2: Prompt Builder
+Create intelligent prompts with dataset statistics for encoding generation
+"""
 
-from typing import Dict
+import numpy as np
+from typing import Dict, Any
+
 
 class PromptBuilder:
-    """Construct structured prompts for angle encoding generation"""
+    """Build prompts for Claude to generate quantum encodings"""
     
-    def __init__(self, dataset_name: str, dataset_stats: Dict, template_family: str):
-        self.dataset_name = dataset_name
-        self.dataset_stats = dataset_stats
-        self.template_family = template_family
+    @staticmethod
+    def build_encoding_prompt(dataset_name: str, X_train: np.ndarray, 
+                            n_pca: int, template_type: str) -> str:
+        """
+        Create a prompt with dataset statistics to guide Claude
+        
+        Args:
+            dataset_name: Name of dataset (mnist, fashion_mnist, cifar10)
+            X_train: Training data (normalized to [0,1])
+            n_pca: Number of PCA dimensions
+            template_type: Type of encoding (linear, polynomial, global_stats, pca_mix)
+        
+        Returns:
+            Prompt string for Claude
+        """
+        
+        # Compute dataset statistics
+        mean = np.mean(X_train, axis=0)
+        std = np.std(X_train, axis=0)
+        
+        stats = {
+            "n_samples": X_train.shape[0],
+            "n_features": X_train.shape[1],
+            "mean_val": float(np.mean(mean)),
+            "std_val": float(np.mean(std)),
+            "min_val": float(X_train.min()),
+            "max_val": float(X_train.max())
+        }
+        
+        prompts = {
+            "linear": PromptBuilder._linear_prompt(dataset_name, stats, n_pca),
+            "polynomial": PromptBuilder._polynomial_prompt(dataset_name, stats, n_pca),
+            "global_stats": PromptBuilder._global_stats_prompt(dataset_name, stats, n_pca),
+            "pca_mix": PromptBuilder._pca_mix_prompt(dataset_name, stats, n_pca)
+        }
+        
+        return prompts.get(template_type, prompts["linear"])
     
-    def build_base_prompt(self) -> str:
-        """Core instruction prompt"""
-        return f"""Generate a Python function that maps {self.dataset_stats['n_features']} features to an angle in [0, 2π].
+    @staticmethod
+    def _linear_prompt(dataset_name: str, stats: Dict[str, Any], n_pca: int) -> str:
+        return f"""
+Generate Python code for quantum encoding.
 
-Template: {self.template_family}
-{self._get_template_description()}
+Input: x (array of {n_pca} normalized features in [0,1])
+Output: Array of 10 angles in [0, 2π]
 
-Dataset: {self.dataset_name} with {self.dataset_stats['n_features']} PCA features
-Value range: [{self.dataset_stats['min_value']:.3f}, {self.dataset_stats['max_value']:.3f}]
+Format: np.array([angle1, angle2, ..., angle10])
 
-Requirements:
-- Output in range [0, 2π] using np.clip()
-- Single Python expression
-- Use only: x[i], np.mean(x), np.std(x), arithmetic
-- No imports, loops, or conditionals
-
-Output as JSON:
-{{"function": "np.clip(your_expression, 0, 2*np.pi)", "explanation": "brief explanation", "template_family": "{self.template_family}"}}
+Simple strategy:
+1. Use 2-3 features per angle
+2. Scale each by 0.1-0.3
+3. Multiply by π to get [0, 3π] range
+4. Use np.clip to enforce [0, 2π]
 
 Example:
-{{"function": "np.clip(0.8 * x[0] + 0.2 * np.mean(x), 0, 2*np.pi)", "explanation": "Weighted combination", "template_family": "linear"}}
+np.array([
+    0.2*x[0]*np.pi,
+    0.3*x[1]*np.pi,
+    0.2*x[2]*np.pi,
+    0.3*x[3]*np.pi,
+    0.2*x[4]*np.pi,
+    0.3*x[5]*np.pi,
+    0.2*x[6]*np.pi,
+    0.3*x[7]*np.pi,
+    0.2*x[8]*np.pi,
+    0.3*x[9]*np.pi
+])
 
-Generate the function:"""
-    
-    def _get_dataset_characteristics(self) -> str:
-        """Dataset-specific hints"""
-        characteristics = {
-            "mnist": """
-**Dataset Characteristics**:
-- Handwritten digits (0-9)
-- Key patterns: Stroke continuity, local pixel correlations
-- Hint: Neighboring feature interactions (x[i]*x[i+1]) capture stroke flow
-""",
-            "fashion_mnist": """
-**Dataset Characteristics**:
-- Clothing items (shirts, shoes, bags, etc.)
-- Key patterns: Texture, edges, global shape
-- Hint: Balance local features with global statistics (mean/std)
-""",
-            "cifar10": """
-**Dataset Characteristics**:
-- Natural color images (animals, vehicles)
-- Key patterns: Color channels, multi-scale textures
-- Hint: First few PCA components capture color info - weight them heavily
-- Note: This is the hardest dataset, quantum baselines only reach ~50% accuracy
+Rules:
+- Return valid Python expression only
+- Must return exactly 10 angles
+- All angles in [0, 2π]
+- No comments or explanation
 """
-        }
-        
-        return characteristics.get(self.dataset_name, "")
     
-    def _get_template_description(self) -> str:
-        """Template-specific instructions"""
-        descriptions = {
-            "linear": """
-**Linear Template Rules**:
-- Form: θ = Σ αᵢ·xᵢ
-- Constraint: Sum of |α| should be ≤ 1
-- Example: θ = 0.7*x[0] + 0.3*x[1]
-- Can include global stats: θ = 0.5*x[0] + 0.3*np.mean(x)
-""",
-            "polynomial": """
-**Polynomial Template Rules**:
-- Form: θ = Σ αᵢ·xᵢ + Σ βᵢⱼ·xᵢ·xⱼ
-- Degree: Maximum 2 (quadratic)
-- Example: θ = 0.5*x[0] + 0.3*x[1] + 0.2*x[0]*x[1]
-- Captures feature interactions
-""",
-            "global_stats": """
-**Global Statistics Template Rules**:
-- Form: θ = δ·mean(x) + ε·std(x) + γ·xᵢ
-- Use: np.mean(x), np.std(x)
-- Example: θ = 1.2*np.mean(x) + 0.5*np.std(x) + 0.3*x[0]
-- Captures dataset-level patterns
-""",
-            "pca_mix": """
-**PCA Mixing Template Rules**:
-- Form: θ = Σ ωᵢ·xᵢ (first 4 components only)
-- Constraint: Only use x[0], x[1], x[2], x[3]
-- Example: θ = 0.5*x[0] + 0.3*x[1] + 0.15*x[2] + 0.05*x[3]
-- First PCs contain most information
+    @staticmethod
+    def _polynomial_prompt(dataset_name: str, stats: Dict[str, Any], n_pca: int) -> str:
+        return f"""
+Generate a POLYNOMIAL quantum encoding (degree 2) for {dataset_name} classification.
+
+Dataset Statistics:
+- Samples: {stats['n_samples']}
+- Features (PCA dims): {n_pca}
+- Data range: [{stats['min_val']:.3f}, {stats['max_val']:.3f}]
+
+Return ONLY a Python expression that:
+1. Takes input `x` (numpy array)
+2. Returns angles in [0, 2π]
+3. Uses format: theta_i = Σ(α_j * x_j) + Σ(β_jk * x_j * x_k)
+
+Constraints:
+- Include interaction terms (x_j * x_k)
+- Sum of absolute coefficients ≤ 1.0
+- All angles in [0, 2π]
+- Keep degree ≤ 2
+
+OUTPUT ONLY the Python expression.
 """
-        }
-        
-        return descriptions.get(self.template_family, "")
     
-    def build_refinement_prompt(self, previous_function: str, previous_accuracy: float, baseline_accuracy: float) -> str:
-        """Prompt for iterative refinement"""
-        improvement = previous_accuracy - baseline_accuracy
-        
-        feedback = "improved" if improvement > 0 else "decreased"
-        
-        return f"""The previous function achieved {previous_accuracy:.2%} accuracy (baseline: {baseline_accuracy:.2%}).
-Performance {feedback} by {abs(improvement):.2%}.
+    @staticmethod
+    def _global_stats_prompt(dataset_name: str, stats: Dict[str, Any], n_pca: int) -> str:
+        return f"""
+Generate a GLOBAL STATISTICS quantum encoding for {dataset_name} classification.
 
-**Previous function**:
-{previous_function}
+Dataset Statistics:
+- Samples: {stats['n_samples']}
+- Features: {n_pca}
+- Data range: [{stats['min_val']:.3f}, {stats['max_val']:.3f}]
 
-**Task**: Generate an IMPROVED function that:
-{'- Builds on successful patterns from previous function' if improvement > 0 else '- Takes a different approach to boost accuracy'}
-- Maintains template family: {self.template_family}
-- Stays within all constraints
+Return ONLY a Python expression that:
+1. Takes input `x` (numpy array)
+2. Returns angles in [0, 2π]
+3. Aggregates using global statistics: mean(x), std(x), etc.
+4. Format: theta_i = δ·mean(x) + ε·std(x) + ζ·max(x)
 
-Generate the improved function in JSON format:
-{{
-    "function": "improved Python expression",
-    "explanation": "what changed and why",
-    "template_family": "{self.template_family}"
-}}"""
+Constraints:
+- Use np.mean(), np.std(), np.max()
+- All angles in [0, 2π]
+- Coefficients sum ≤ 1.0
 
-
-# Test
-if __name__ == "__main__":
-    stats = {
-        "n_features": 10,
-        "mean_value": 0.5,
-        "std_value": 0.2,
-        "min_value": 0.0,
-        "max_value": 1.0
-    }
+OUTPUT ONLY the Python expression.
+"""
     
-    builder = PromptBuilder("mnist", stats, "linear")
-    prompt = builder.build_base_prompt()
-    print(prompt)
-    print("\n" + "="*80 + "\n")
-    
-    refine_prompt = builder.build_refinement_prompt(
-        "0.8 * x[0] + 0.2 * x[1]",
-        0.89,
-        0.87
-    )
-    print(refine_prompt)
+    @staticmethod
+    def _pca_mix_prompt(dataset_name: str, stats: Dict[str, Any], n_pca: int) -> str:
+        return f"""
+Generate a PCA_MIX quantum encoding for {dataset_name} classification.
+
+Dataset Statistics:
+- Samples: {stats['n_samples']}
+- PCA dimensions: {n_pca}
+- Data range: [{stats['min_val']:.3f}, {stats['max_val']:.3f}]
+
+Return ONLY a Python expression that:
+1. Takes input `x` (numpy array of PCA-reduced features)
+2. Returns angles in [0, 2π]
+3. Mix primary and derived features: theta_i = Σ(ω_j * x_j)
+4. Use limited components (max 4) for stability
+
+Constraints:
+- Focus on top variance components
+- Use at most 4 principal components
+- Coefficients sum ≤ 1.0
+- All angles in [0, 2π]
+
+OUTPUT ONLY the Python expression.
+"""
