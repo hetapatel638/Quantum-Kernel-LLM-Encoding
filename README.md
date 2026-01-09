@@ -1,163 +1,130 @@
-# 5-Level Quantum ML Framework
+# Hybrid Quantum–Classical Image Classification  
+### LLM-Guided Nonlinear Encoding with Quantum Kernel Estimation
 
-## Architecture Overview
+This repository contains a reference implementation of a **hybrid quantum–classical image classification pipeline** based on **quantum kernel methods** and **multi-layer data re-uploading circuits**.
 
-```
-Level 1: DATA PIPELINE
-├── data/loader.py          → Load MNIST, Fashion-MNIST, CIFAR-10
-└── data/preprocessor.py    → PCA + Normalization to [0,1]
+The project explores how **nonlinear data encoding strategies**, including those generated using a **Large Language Model (LLM)**, can be integrated into quantum kernel estimation frameworks in a controlled and reproducible manner. The emphasis of this work is on **methodological design and feasibility**, rather than exhaustive performance benchmarking.
 
-Level 2: LLM PROMPT ENGINEERING
-├── llm/claude_interface.py       → Call Claude API
-└── encoding/prompt_builder.py    → Generate smart prompts with dataset stats
 
-Level 3: ENCODING SYNTHESIS & VALIDATION
-├── encoding/templates.py         → Template families
-└── encoding/validator.py         → Validate generated encoding
+## Overview
 
-Level 4: QUANTUM CIRCUIT & KERNEL (QISKIT)
-├── quantum/qiskit_circuit.py     → Build Qiskit parameterized circuits
-└── quantum/qiskit_kernel.py      → Compute Gram matrix
+Quantum kernel methods embed classical data into a high-dimensional quantum feature space using parameterized quantum circuits. The effectiveness of these methods depends critically on how classical features are encoded into circuit parameters.
 
-Level 5: TRAINING & EVALUATION
-└── evaluation/svm_trainer.py     → Train SVM, compute metrics
+This implementation combines:
+- classical dimensionality reduction using PCA,
+- structured nonlinear feature encoding,
+- multi-layer data re-uploading quantum circuits, and
+- kernel-based classification using a classical Support Vector Machine (SVM).
 
-ORCHESTRATION:
-├── config.py              → All parameters
-├── main.py               → CLI entry point
-└── experiments/          → Dataset runners
-```
+An optional LLM-based component is used to synthesize candidate nonlinear encoding functions under strict safety and reproducibility constraints.
+
+## Key Characteristics
+
+- Hybrid quantum–classical learning pipeline
+- PCA-based preprocessing with feature normalization
+- Fixed-architecture data re-uploading quantum circuit
+- Fidelity-based quantum kernel estimation using Qiskit
+- Optional LLM-guided nonlinear encoding with deterministic fallback
+- Designed for clarity, reproducibility, and academic evaluation
+
+## Pipeline Description
+
+The implemented workflow consists of the following stages:
+
+1. **Data Loading**  
+   Image datasets (MNIST, Fashion-MNIST, or CIFAR-10) are loaded and flattened into classical feature vectors.
+
+2. **Preprocessing**  
+   Features are reduced using Principal Component Analysis (typically 80 components) and normalized to the range [0, 1].
+
+3. **Encoding Generation**  
+   Nonlinear mappings from classical features to circuit parameters are generated either:
+   - via an LLM (if enabled), or
+   - using a deterministic fallback encoder.
+
+4. **Quantum Feature Map Construction**  
+   A parameterized quantum circuit with 10 qubits is constructed using a multi-layer data re-uploading design with interleaved entangling operations.
+
+5. **Quantum Kernel Estimation**  
+   Pairwise fidelities between quantum states are computed to form a kernel (Gram) matrix.
+
+6. **Classical Classification**  
+   A Support Vector Machine is trained using the precomputed quantum kernel.
+
+7. **Evaluation**  
+   Classification accuracy and standard metrics are reported.
+
+## Repository Structure
+
+QML/
+├── llm_qke_reuploading.ipynb # Main implementation (Google Colab notebook)
+├── README.md # Project documentation
+├── requirements.txt # Python dependencies
+├── .gitignore
+└── _archive/ # Notes, drafts, and experimental material
+
+yaml
+Copy code
+
+Only the main notebook is required to run the reference implementation.  
+Archived files are retained for transparency but are not part of the core pipeline.
 
 ## Setup
 
-### 1. Install Dependencies
+### Recommended Environment
+Google Colab (Python 3.10 or later)
+
+### Install Dependencies
 ```bash
 pip install -r requirements.txt
-```
-
-### 2. Set Claude API Key
+Optional: LLM API Key
 ```bash
-export ANTHROPIC_API_KEY='your-anthropic-api-key'
-```
 
-## Quick Start
+### Copy code
+export ANTHROPIC_API_KEY="your_api_key_here"
+If no API key is provided, the pipeline automatically uses a deterministic nonlinear encoding strategy.
 
-### Single Dataset Experiment
-```bash
-# MNIST with linear encoding, 40 PCA dims
-python main.py --mode single --dataset mnist --template linear --n_pca 40
+Running the Implementation
+Open and execute the notebook:
 
-# Fashion-MNIST with polynomial encoding
-python main.py --mode single --dataset fashion_mnist --template polynomial --n_pca 40
+### Copy code
+llm_qke_reuploading.ipynb
+The default configuration runs an experiment on the MNIST dataset using:
+      80 PCA components,
+      10 qubits,
+      5 data re-uploading layers,
+      fidelity-based quantum kernel estimation,
+      SVM classification with a precomputed kernel.
+Other datasets can be enabled by modifying the configuration cell within the notebook.
 
-# CIFAR-10 with global_stats encoding
-python main.py --mode single --dataset cifar10 --template global_stats --n_pca 40
-```
+### Quantum Circuit Design
+The quantum feature map uses a fixed circuit architecture to ensure reproducibility across experiments. Data re-uploading is implemented by alternating between data-dependent rotations and entangling operations over multiple layers.
 
-### All Three Datasets
-```bash
-# Run all datasets with linear encoding
-python main.py --mode multi --template linear --n_pca 40
+This design increases the expressive capacity of the induced quantum kernel while maintaining controlled circuit depth and structure.
 
-# Run all datasets with polynomial encoding
-python main.py --mode multi --template polynomial --n_pca 80
-```
+### LLM-Guided Encoding
+When enabled, the LLM generates nonlinear expressions that map classical features to rotation angles. All generated expressions are:
 
-### Testing (Mock Mode)
-```bash
-# Test without Claude API (uses fallback encoding)
-python main.py --mode single --dataset mnist --mock
-```
+restricted to a predefined set of mathematical operations,
 
-## Configuration
+validated for numerical stability,
 
-Edit `config.py` to modify:
-- **Datasets**: MNIST, Fashion-MNIST, CIFAR-10
-- **PCA dimensions**: [10, 40, 80]
-- **Qiskit quantum**: n_qubits=10, max_depth=12
-- **SVM parameters**: C=1.0
-- **Claude model**: claude-3-5-sonnet-20241022
+cached to support reproducibility.
 
-## Pipeline Flow
+The LLM is used as a tool for structured hypothesis generation, rather than as an unconstrained optimizer.
 
-```
-1. Load Data
-   └→ MNIST/Fashion-MNIST/CIFAR-10 (raw pixels)
+### Experimental Scope
+For initial validation, experiments are typically conducted on MNIST due to its computational efficiency. Support for Fashion-MNIST and CIFAR-10 is included, but these datasets are more computationally demanding.
 
-2. Preprocess
-   └→ PCA reduction (n_pca dimensions)
-   └→ Normalize to [0,1]
+The methodology is designed to scale to additional datasets in future work.
 
-3. Generate Encoding
-   └→ Claude creates formula via prompt
-   └→ Template: linear, polynomial, global_stats, or pca_mix
+### References
+Qiskit Machine Learning Documentation
+https://qiskit-machine-learning.readthedocs.io/
 
-4. Validate Encoding
-   └→ Check syntax & output range [0, 2π]
+Havlíček et al., Supervised learning with quantum-enhanced feature spaces, Nature (2019)
 
-5. Build Quantum Circuit
-   └→ Qiskit circuit with RY rotations
-   └→ Entanglement layer (linear or full)
+Schuld & Killoran, Quantum machine learning in feature Hilbert spaces (2019)
 
-6. Compute Kernel
-   └→ Quantum fidelity between data points
-
-7. Train SVM
-   └→ SVM on precomputed kernel matrix
-
-8. Evaluate
-   └→ Accuracy, F1, Precision, Recall
-```
-
-## Output
-
-Results saved to `results/` as JSON:
-```json
-{
-  "dataset": "mnist",
-  "encoding": {
-    "code": "0.5*np.mean(x) + 0.3*np.std(x)",
-    "template_type": "global_stats",
-    "is_valid": true
-  },
-  "metrics": {
-    "accuracy": 0.8725,
-    "f1_macro": 0.8610,
-    "f1_weighted": 0.8710,
-    "precision_macro": 0.8650,
-    "recall_macro": 0.8600
-  },
-  "timing": 234.5
-}
-```
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `config.py` | Global configuration |
-| `data/loader.py` | Dataset loading |
-| `data/preprocessor.py` | PCA + normalization |
-| `llm/claude_interface.py` | Claude API calls |
-| `encoding/prompt_builder.py` | Prompt generation |
-| `encoding/templates.py` | Template definitions |
-| `encoding/validator.py` | Encoding validation |
-| `quantum/qiskit_circuit.py` | Qiskit circuit builder |
-| `quantum/qiskit_kernel.py` | Kernel computation |
-| `evaluation/svm_trainer.py` | SVM training & evaluation |
-| `experiments/run_single_dataset.py` | Single dataset pipeline |
-| `experiments/run_all_datasets.py` | Multi-dataset runner |
-| `main.py` | CLI entry point |
-
-## References
-
-- **Claude API**: https://docs.anthropic.com/
-- **Qiskit**: https://qiskit.org/
-- **Quantum Kernels**: https://qiskit-machine-learning.readthedocs.io/
-
----
-
-**Created**: December 26, 2025  
-**Architecture**: 5-Level design with clear separation of concerns  
-**LLM**: Claude (Anthropic)  
-**Quantum**: Qiskit
+Anthropic Claude API Documentation
+https://docs.anthropic.com/
