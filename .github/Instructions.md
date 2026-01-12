@@ -1,5 +1,3 @@
-# AI Coding Agent Instructions
-
 ## Project Overview
 This is a **Quantum Machine Learning Framework** that synthesizes feature encoding strategies using LLMs and evaluates them on quantum circuits. The goal is to discover novel encoding templates that encode classical data into quantum angles for better classification.
 
